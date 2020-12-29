@@ -89,4 +89,22 @@ router.route('/traveldetail')
     });
   });
 
+// 目的地详情页
+router.route('/details')
+  .get((req, res, next) => {
+    const sql = `select * from details where id='${req.query.id}'`;
+    conn.query(sql, (err, results) => {
+      if (err) console.log(err);
+      const header = JSON.parse(results[0].header);
+      const willplay = JSON.parse(results[0].willplay);
+      const recommend = JSON.parse(results[0].recommend);
+      res.json({
+        status: 0,
+        header: header[0].header,
+        willplay: willplay[0].play,
+        recommend: recommend[0].recom
+      });
+    });
+  });
+
 module.exports = router;

@@ -11,7 +11,10 @@ const router = express.Router();
 // 发送邮件接口
 router.route('/getcode')
   .post((req, res, next) => {
-    fs.writeFile(path.join(__dirname, '..', 'temp', req.body.email), sendMail(req.body), 'utf8', (err) => {
+    fs.writeFile(path.join(__dirname, '..', 'temp', 'code.txt'), sendMail(req.body), 'utf8', (err) => {
+      if (err) console.log(err);
+    });
+    fs.writeFile(path.join(__dirname, '..', 'temp', 'email.txt'), req.body.email, 'utf8', (err) => {
       if (err) console.log(err);
       res.json({
         status: 0,
@@ -24,31 +27,32 @@ router.route('/getcode')
 router.route('/checkcode')
   .post((req, res, next) => {
     // 读取文件
-    fs.readFile(path.join(__dirname, '..', 'temp', req.body.email), 'utf8', (err, data) => {
+    fs.readFile(path.join(__dirname, '..', 'temp', 'email.txt'), 'utf8', (err, data) => {
       if (err) console.log(err);
-
-      if (data === req.body.code) {
-        fs.unlink(path.join(__dirname, '..', 'temp', req.body.email), (err) => {
-          if (err) console.log(err);
-          console.log('临时文件已删除');
-        });
-
-        const sql = `INSERT INTO users (username, phone, email, address) VALUES ('${req.body.username}', '${req.body.phone}', '${req.body.email}', '${req.body.address}')`;
-        
-        conn.query(sql, (err) => {
-          if (err) console.log(err);
-        });
-
-        res.json({
-          status: 0,
-          msg: '注册成功'
-        });
-      } else {
-        res.json({
-          status: 0,
-          msg: '验证码或邮箱错误，请重新输入'
-        });
-      }
+      fs.readFile(path.join(__dirname, '..', 'temp', 'code.txt'), 'utf8', (err, data2) => {
+        if (err) console.log(err);
+        if(data === req.body.email && data2 === req.body.code) {
+          fs.writeFile(path.join(__dirname, '..', 'temp', 'email.txt'), '', (err) => {
+            if (err) console.log(err);
+          });
+          fs.writeFile(path.join(__dirname, '..', 'temp', 'code.txt'), '', (err) => {
+            if (err) console.log(err);
+          });
+          const sql = `INSERT INTO users (username, phone, email, address) VALUES ('${req.body.username}', '${req.body.phone}', '${req.body.email}', '${req.body.address}')`;
+          conn.query(sql, (err) => {
+            if (err) console.log(err);
+          });
+          res.json({
+            status: 0,
+            msg: '注册成功'
+          })
+        } else {
+          res.json({
+            status: 0,
+            msg: '验证码或邮箱错误，请重新输入'
+          })
+        }
+      });
     });
   });
 
